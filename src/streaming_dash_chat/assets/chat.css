@@ -1,0 +1,209 @@
+/* streaming_dash_chat -- base styles. CSS variables make theme/placement
+   customization straightforward without overriding whole rulesets. */
+
+.sdc-root {
+  --sdc-radius: 16px;
+  --sdc-gap: 10px;
+  --sdc-bg: #ffffff;
+  --sdc-fg: #1a1a1a;
+  --sdc-muted: #6b7280;
+  --sdc-border: #e5e7eb;
+  --sdc-accent: #2563eb;
+  --sdc-accent-fg: #ffffff;
+  --sdc-user-bubble: #2563eb;
+  --sdc-user-bubble-fg: #ffffff;
+  --sdc-assistant-bubble: #f3f4f6;
+  --sdc-assistant-bubble-fg: #1a1a1a;
+  --sdc-error-bubble: #fee2e2;
+  --sdc-error-bubble-fg: #991b1b;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+}
+
+.sdc-theme--dark {
+  --sdc-bg: #1b1d22;
+  --sdc-fg: #f3f4f6;
+  --sdc-muted: #9ca3af;
+  --sdc-border: #2e3138;
+  --sdc-accent: #3b82f6;
+  --sdc-accent-fg: #ffffff;
+  --sdc-user-bubble: #3b82f6;
+  --sdc-user-bubble-fg: #ffffff;
+  --sdc-assistant-bubble: #2a2d34;
+  --sdc-assistant-bubble-fg: #f3f4f6;
+  --sdc-error-bubble: #451a1a;
+  --sdc-error-bubble-fg: #fca5a5;
+}
+
+/* Toggle (floating action) button */
+.sdc-toggle-btn {
+  position: fixed;
+  right: 24px;
+  bottom: 24px;
+  z-index: 1045;
+  padding: 12px 20px;
+  border-radius: 999px;
+  border: none;
+  background: var(--sdc-accent);
+  color: var(--sdc-accent-fg);
+  font-weight: 600;
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.2);
+  cursor: pointer;
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+.sdc-toggle-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 10px 22px rgba(0, 0, 0, 0.25);
+}
+
+/* Offcanvas shell -- override Bootstrap's modal-like defaults */
+.sdc-offcanvas {
+  background: var(--sdc-bg);
+  color: var(--sdc-fg);
+  display: flex;
+  flex-direction: column;
+  border: none !important;
+  box-shadow: 0 0 40px rgba(0, 0, 0, 0.15);
+}
+.sdc-offcanvas .offcanvas-body {
+  display: flex;
+  flex-direction: column;
+  padding: 0;
+  overflow: hidden;
+}
+
+/* Header */
+.sdc-header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 16px 18px;
+  border-bottom: 1px solid var(--sdc-border);
+  flex-shrink: 0;
+}
+.sdc-avatar {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  object-fit: cover;
+}
+.sdc-avatar--fallback {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--sdc-accent);
+  color: var(--sdc-accent-fg);
+  font-weight: 700;
+}
+.sdc-header-text { display: flex; flex-direction: column; line-height: 1.25; }
+.sdc-header-title { font-weight: 600; font-size: 1rem; }
+.sdc-header-subtitle { font-size: 0.8rem; color: var(--sdc-muted); }
+.sdc-header-spacer { flex: 1 1 auto; }
+.sdc-header-btn, .sdc-close-btn {
+  border: none;
+  background: transparent;
+  color: var(--sdc-muted);
+  cursor: pointer;
+  padding: 6px 10px;
+  border-radius: 8px;
+  font-size: 0.85rem;
+}
+.sdc-close-btn { font-size: 1.25rem; line-height: 1; padding: 4px 8px; }
+.sdc-header-btn:hover, .sdc-close-btn:hover { background: var(--sdc-border); color: var(--sdc-fg); }
+
+/* Message list */
+.sdc-scroll-area {
+  flex: 1 1 auto;
+  overflow-y: auto;
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: var(--sdc-gap);
+  scroll-behavior: smooth;
+}
+/* Grouping wrapper only -- its children lay out directly in .sdc-scroll-area's
+   flex column so Patch-appended history and the active bubble share one
+   scroll container and one auto-scroll behavior. */
+.sdc-messages { display: contents; }
+
+.sdc-message { display: flex; max-width: 85%; }
+.sdc-message--user { align-self: flex-end; }
+.sdc-message--assistant, .sdc-message--error { align-self: flex-start; }
+
+.sdc-message-bubble {
+  border-radius: var(--sdc-radius);
+  padding: 10px 14px;
+  overflow-wrap: anywhere;
+}
+.sdc-message--user .sdc-message-bubble {
+  background: var(--sdc-user-bubble);
+  color: var(--sdc-user-bubble-fg);
+  border-bottom-right-radius: 4px;
+}
+.sdc-message--assistant .sdc-message-bubble {
+  background: var(--sdc-assistant-bubble);
+  color: var(--sdc-assistant-bubble-fg);
+  border-bottom-left-radius: 4px;
+}
+.sdc-message-bubble--error {
+  background: var(--sdc-error-bubble);
+  color: var(--sdc-error-bubble-fg);
+}
+
+.sdc-message-markdown { font-size: 0.92rem; line-height: 1.5; }
+.sdc-message-markdown p:last-child { margin-bottom: 0; }
+.sdc-message-markdown pre {
+  background: rgba(0, 0, 0, 0.3);
+  border-radius: 8px;
+  padding: 10px 12px;
+  overflow-x: auto;
+}
+.sdc-message-timestamp { font-size: 0.7rem; color: var(--sdc-muted); margin-top: 4px; }
+
+.sdc-message-actions { display: flex; gap: 6px; margin-top: 6px; }
+.sdc-action-btn {
+  border: 1px solid var(--sdc-border);
+  background: transparent;
+  color: var(--sdc-muted);
+  font-size: 0.72rem;
+  padding: 3px 8px;
+  border-radius: 999px;
+  cursor: pointer;
+}
+.sdc-action-btn:hover { background: var(--sdc-border); color: var(--sdc-fg); }
+.sdc-action-btn.sdc-action-btn--active { color: var(--sdc-accent); border-color: var(--sdc-accent); }
+
+/* Active (in-progress) streaming bubble sits visually like an assistant message */
+.sdc-active-bubble .sdc-message-bubble { background: var(--sdc-assistant-bubble); color: var(--sdc-assistant-bubble-fg); border-bottom-left-radius: 4px; }
+
+/* Input row */
+.sdc-input-row {
+  display: flex;
+  align-items: flex-end;
+  gap: 8px;
+  padding: 12px 16px;
+  border-top: 1px solid var(--sdc-border);
+  flex-shrink: 0;
+}
+.sdc-input {
+  flex: 1 1 auto;
+  resize: none;
+  border-radius: 12px;
+  max-height: 140px;
+}
+.sdc-send-btn, .sdc-cancel-btn {
+  border: none;
+  border-radius: 10px;
+  padding: 8px 14px;
+  font-weight: 600;
+  cursor: pointer;
+}
+.sdc-send-btn { background: var(--sdc-accent); color: var(--sdc-accent-fg); }
+.sdc-send-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+.sdc-cancel-btn { background: transparent; border: 1px solid var(--sdc-border); color: var(--sdc-fg); }
+.sdc-cancel-btn:disabled { opacity: 0.4; cursor: not-allowed; }
+
+.sdc-report-reasons .form-check { margin-bottom: 6px; }
+
+@media (max-width: 480px) {
+  .sdc-offcanvas { width: 100vw !important; }
+}

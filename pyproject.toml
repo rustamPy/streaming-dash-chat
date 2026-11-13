@@ -1,0 +1,65 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "streaming-dash-chat"
+version = "0.1.0"
+description = "A reusable, production-ready streaming chat component for Plotly Dash, built on Dash Bootstrap Components."
+readme = "README.md"
+license = "MIT"
+license-files = ["LICENSE"]
+authors = [{ name = "Rustam Karimov", email = "karimov.rustam.live@gmail.com" }]
+requires-python = ">=3.12,<3.15"
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "Framework :: Dash",
+    "Intended Audience :: Developers",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.14",
+    "Topic :: Software Development :: Libraries :: Python Modules",
+]
+dependencies = [
+    "dash[async]>=4.4.0",
+    "dash-bootstrap-components>=1.5",
+    "flask>=3.0",
+    "pydantic>=2.6",
+]
+
+[project.optional-dependencies]
+openai = ["openai>=3.40"]
+pydantic-ai = ["pydantic-ai>=2.60.0"]
+all = [
+    "openai>=3.40",
+    "pydantic-ai>=2.60.0",
+]
+dev = [
+    "pytest>=8.0",
+    "pytest-asyncio>=0.23",
+    "build>=1.2",
+]
+
+[project.urls]
+Homepage = "https://github.com/example/streaming-dash-chat"
+Changelog = "https://github.com/example/streaming-dash-chat/blob/main/CHANGELOG.md"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/streaming_dash_chat"]
+
+[tool.hatch.build.targets.wheel.force-include]
+"src/streaming_dash_chat/assets" = "streaming_dash_chat/assets"
+
+[tool.hatch.build.targets.sdist]
+include = [
+    "src/streaming_dash_chat",
+    "tests",
+    "examples",
+    "README.md",
+    "LICENSE",
+    "CHANGELOG.md",
+]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+asyncio_mode = "auto"
+asyncio_default_fixture_loop_scope = "function"
