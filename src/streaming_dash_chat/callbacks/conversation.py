@@ -11,12 +11,16 @@ from dash import Input, Output, State, ctx
 from streaming_dash_chat.layout.message import render_message
 from streaming_dash_chat.models import Message, Role
 from streaming_dash_chat.services.conversation_manager import ConversationManager
+from streaming_dash_chat.services.sinks import build_record
+import time
 
 if TYPE_CHECKING:
     from streaming_dash_chat.component import AIChat
 
 
-def register_conversation_callbacks(app: dash.Dash, registry: dict[str, "AIChat"]) -> None:
+def register_conversation_callbacks(
+    app: dash.Dash, registry: dict[str, "AIChat"]
+) -> None:
     @app.callback(
         Output({"type": "sdc-offcanvas", "chat": dash.MATCH}, "is_open"),
         Input({"type": "sdc-toggle", "chat": dash.MATCH}, "n_clicks"),
@@ -30,9 +34,17 @@ def register_conversation_callbacks(app: dash.Dash, registry: dict[str, "AIChat"
         return not is_open
 
     @app.callback(
-        Output({"type": "sdc-messages", "chat": dash.MATCH}, "children", allow_duplicate=True),
+        Output(
+            {"type": "sdc-messages", "chat": dash.MATCH},
+            "children",
+            allow_duplicate=True,
+        ),
         Output({"type": "sdc-store", "chat": dash.MATCH}, "data", allow_duplicate=True),
-        Output({"type": "sdc-active-bubble", "chat": dash.MATCH}, "style", allow_duplicate=True),
+        Output(
+            {"type": "sdc-active-bubble", "chat": dash.MATCH},
+            "style",
+            allow_duplicate=True,
+        ),
         Input({"type": "sdc-new-conversation", "chat": dash.MATCH}, "n_clicks"),
         State({"type": "sdc-store", "chat": dash.MATCH}, "data"),
         prevent_initial_call=True,
@@ -41,8 +53,26 @@ def register_conversation_callbacks(app: dash.Dash, registry: dict[str, "AIChat"
         chat_id = ctx.triggered_id["chat"]
         chat = registry[chat_id]
 
+        # 1. Resolve identifiers first
         session_id = ConversationManager.resolve_session_id(store_data)
         old_conversation_id = (store_data or {}).get("conversation_id") or "default"
+
+        # 2. Snapshot for the sinks BEFORE clearing
+        history = chat.conversations.history(session_id, old_conversation_id)
+        if history:
+            chat.sinks.emit(
+                "on_conversation_closed",
+                build_record(
+                    chat_id,
+                    session_id,
+                    old_conversation_id,
+                    history,
+                    closed_at=time.time(),
+                    close_reason="new_chat",
+                ),
+            )
+
+        # 3. Now clear
         chat.conversations.clear(session_id, old_conversation_id)
 
         store_data = dict(store_data or {})
@@ -55,7 +85,11 @@ def register_conversation_callbacks(app: dash.Dash, registry: dict[str, "AIChat"
             welcome = [
                 render_message(
                     chat_id,
-                    Message(id="welcome", role=Role.ASSISTANT, content=chat.config.welcome_message),
+                    Message(
+                        id="welcome",
+                        role=Role.ASSISTANT,
+                        content=chat.config.welcome_message,
+                    ),
                     chat.config,
                 )
             ]

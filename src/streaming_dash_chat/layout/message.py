@@ -30,66 +30,65 @@ def render_message(chat_id: str, message: Message, config: AIChatConfig) -> html
                 className="sdc-message-timestamp",
             )
         )
+
+    children = [html.Div(bubble_children, className="sdc-message-bubble")]
     if role == Role.ASSISTANT or role == "assistant":
-        bubble_children.append(render_message_actions(chat_id, message, config))
+        children.append(
+            render_message_actions(chat_id, message, config)
+        )  # outside the bubble
 
     return html.Div(
-        html.Div(bubble_children, className="sdc-message-bubble"),
+        children,
         id={"type": "sdc-message", "chat": chat_id, "message": message.id},
         className=f"sdc-message sdc-message--{role}",
         **{"data-role": role},
     )
 
 
-def render_message_actions(chat_id: str, message: Message, config: AIChatConfig) -> html.Div:
+def _action_button(
+    chat_id, message, kind: str, label: str, *, toggle: bool = False, extra=None
+):
+    props = {
+        "id": {"type": f"sdc-{kind}", "chat": chat_id, "message": message.id},
+        "className": f"sdc-action-btn sdc-icon--{kind}"
+        + (" sdc-copy-btn" if kind == "copy" else ""),
+        "title": label,
+        "aria-label": label,
+        "type": "button",
+    }
+    if toggle:
+        props["aria-pressed"] = "false"
+    if extra:
+        props.update(extra)
+    return html.Button(**props)
+
+
+def render_message_actions(
+    chat_id: str, message: Message, config: AIChatConfig
+) -> html.Div:
     buttons = [
-        html.Button(
-            "Copy",
-            id={"type": "sdc-copy", "chat": chat_id, "message": message.id},
-            className="sdc-action-btn sdc-copy-btn",
-            title="Copy response",
-            **{"data-copy-text": message.content},
-        )
+        _action_button(
+            chat_id, message, "copy", "Copy", extra={"data-copy-text": message.content}
+        ),
     ]
     if config.allow_feedback:
         buttons.append(
-            html.Button(
-                "Like",
-                id={"type": "sdc-like", "chat": chat_id, "message": message.id},
-                className="sdc-action-btn",
-                title="Like this response",
-            )
+            _action_button(chat_id, message, "like", "Good response", toggle=True)
         )
         buttons.append(
-            html.Button(
-                "Dislike",
-                id={"type": "sdc-dislike", "chat": chat_id, "message": message.id},
-                className="sdc-action-btn",
-                title="Dislike this response",
-            )
-        )
-    if config.allow_report:
-        buttons.append(
-            html.Button(
-                "Report",
-                id={"type": "sdc-report", "chat": chat_id, "message": message.id},
-                className="sdc-action-btn",
-                title="Report this response",
-            )
+            _action_button(chat_id, message, "dislike", "Bad response", toggle=True)
         )
     if config.allow_regenerate:
-        buttons.append(
-            html.Button(
-                "Regenerate",
-                id={"type": "sdc-regenerate", "chat": chat_id, "message": message.id},
-                className="sdc-action-btn",
-                title="Regenerate this response",
-            )
-        )
+        buttons.append(_action_button(chat_id, message, "regenerate", "Retry"))
+    if config.allow_report:
+        buttons.append(_action_button(chat_id, message, "report", "Report"))
+
     return html.Div(
         buttons,
         className="sdc-message-actions",
+        role="toolbar",
         id={"type": "sdc-message-actions", "chat": chat_id, "message": message.id},
+        **{"aria-label": "Message actions"},
     )
 
 

@@ -31,19 +31,13 @@ _USER_FACING_ERROR = (
 
 """Static asset registration for the AIChat component."""
 
-from pathlib import Path
-
-from flask import send_from_directory
-
-ASSETS_DIR = Path(__file__).parent
-
 
 def register_message_callbacks(app: dash.Dash, registry: dict[str, "AIChat"]) -> None:
     @app.callback(
         Output({"type": "sdc-messages", "chat": dash.MATCH}, "children"),
         Output({"type": "sdc-active-content", "chat": dash.MATCH}, "children"),
         Output({"type": "sdc-active-bubble", "chat": dash.MATCH}, "style"),
-        Output({"type": "sdc-store", "chat": dash.MATCH}, "data"),
+        Output({"type": "sdc-store", "chat": dash.MATCH}, "data", allow_duplicate=True),
         Output({"type": "sdc-cancel", "chat": dash.MATCH}, "disabled"),
         Output({"type": "sdc-input", "chat": dash.MATCH}, "value"),
         Input({"type": "sdc-send", "chat": dash.MATCH}, "n_clicks"),
@@ -187,7 +181,10 @@ async def _run_stream(
                 _dcc.Markdown(
                     accumulated,
                     className="sdc-message-markdown",
-                    highlight_config={"theme": "dark"},
+                    link_target="_blank",
+                    highlight_config={
+                        "theme": "dark" if chat.config.theme == "dark" else "light"
+                    },
                 ),
                 no_update,
                 no_update,
@@ -199,7 +196,11 @@ async def _run_stream(
                 final_patch.append(
                     render_message(
                         chat.config.id,
-                        Message(role=Role.ASSISTANT, content=accumulated),
+                        Message(
+                            id=chunk.message_id or uuid.uuid4().hex,
+                            role=Role.ASSISTANT,
+                            content=accumulated,
+                        ),
                         chat.config,
                     )
                 )
@@ -213,7 +214,11 @@ async def _run_stream(
                 final_patch.append(
                     render_message(
                         chat.config.id,
-                        Message(role=Role.ASSISTANT, content=accumulated),
+                        Message(
+                            id=chunk.message_id or uuid.uuid4().hex,
+                            role=Role.ASSISTANT,
+                            content=accumulated,
+                        ),
                         chat.config,
                     )
                 )

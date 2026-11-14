@@ -43,12 +43,11 @@ class StreamChunkType(str, Enum):
 
 
 class StreamChunk(BaseModel):
-    """A single increment produced by a provider's streaming generator."""
-
     type: StreamChunkType
     text: str = ""
     usage: Usage | None = None
     error: str | None = None
+    message_id: str | None = None
 
 
 class ChatResponse(BaseModel):
@@ -68,6 +67,7 @@ class Feedback(BaseModel):
     message_id: str
     conversation_id: str
     feedback_type: FeedbackType
+    session_id: str | None = None
     timestamp: float = Field(default_factory=time.time)
 
 
@@ -76,4 +76,25 @@ class Report(BaseModel):
     conversation_id: str
     reason: str
     details: str | None = None
+    session_id: str | None = None
     timestamp: float = Field(default_factory=time.time)
+
+
+class ConversationRecord(BaseModel):
+    chat_id: str
+    session_id: str
+    conversation_id: str
+    messages: list[Message]
+    started_at: float
+    updated_at: float = Field(default_factory=time.time)
+    closed_at: float | None = None  # set when "New chat" is pressed
+    close_reason: str | None = None  # "new_chat"
+
+
+class LogEvent(BaseModel):
+    type: str  # stream_started | stream_finished | stream_error
+    chat_id: str
+    session_id: str
+    conversation_id: str
+    timestamp: float = Field(default_factory=time.time)
+    data: dict[str, Any] = Field(default_factory=dict)

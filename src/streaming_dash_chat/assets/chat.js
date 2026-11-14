@@ -33,17 +33,48 @@
   }
 
   document.addEventListener("click", function (event) {
-    var btn = event.target.closest(".sdc-copy-btn");
-    if (!btn) return;
-    var text = btn.getAttribute("data-copy-text") || "";
-    if (!navigator.clipboard || !navigator.clipboard.writeText) return;
-    navigator.clipboard.writeText(text).then(function () {
-      var original = btn.textContent;
-      btn.textContent = "Copied";
-      window.setTimeout(function () {
-        btn.textContent = original;
-      }, 1500);
-    });
+    // Expand / collapse the chat panel
+    var expandBtn = event.target.closest(".sdc-expand-btn");
+    if (expandBtn) {
+      var panel = expandBtn.closest(".sdc-offcanvas");
+      if (!panel) return;
+      var expanded = panel.classList.toggle("sdc-expanded");
+      panel.style.setProperty(
+        "--sdc-expanded-width",
+        expandBtn.getAttribute("data-expanded-width") || "720px"
+      );
+      expandBtn.setAttribute("data-expanded", expanded ? "true" : "false");
+      var label = expanded ? "Collapse chat" : "Expand chat";
+      expandBtn.setAttribute("aria-label", label);
+      expandBtn.setAttribute("title", expanded ? "Collapse" : "Expand");
+      return;
+    }
+  });
+
+
+  document.addEventListener("click", function (event) {
+    // Copy: icon flips to a checkmark for 1.5s
+    var copyBtn = event.target.closest(".sdc-copy-btn");
+    if (copyBtn) {
+      var text = copyBtn.getAttribute("data-copy-text") || "";
+      if (!navigator.clipboard || !navigator.clipboard.writeText) return;
+      navigator.clipboard.writeText(text).then(function () {
+        copyBtn.classList.add("is-copied");
+        window.setTimeout(function () { copyBtn.classList.remove("is-copied"); }, 1500);
+      });
+      return;
+    }
+
+    // Like / dislike: mutually exclusive, click again to clear
+    var voteBtn = event.target.closest(".sdc-icon--like, .sdc-icon--dislike");
+    if (voteBtn) {
+      var wasPressed = voteBtn.getAttribute("aria-pressed") === "true";
+      var row = voteBtn.closest(".sdc-message-actions");
+      row.querySelectorAll("[aria-pressed]").forEach(function (b) {
+        b.setAttribute("aria-pressed", "false");
+      });
+      voteBtn.setAttribute("aria-pressed", wasPressed ? "false" : "true");
+    }
   });
 
   new MutationObserver(scan).observe(document.documentElement, { childList: true, subtree: true });

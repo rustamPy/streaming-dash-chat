@@ -22,32 +22,50 @@ logger = logging.getLogger(__name__)
 def register_feedback_callbacks(app: dash.Dash, registry: dict[str, "AIChat"]) -> None:
     @app.callback(
         Output({"type": "sdc-store", "chat": dash.MATCH}, "data", allow_duplicate=True),
-        Input({"type": "sdc-like", "chat": dash.MATCH, "message": dash.ALL}, "n_clicks"),
+        Input(
+            {"type": "sdc-like", "chat": dash.MATCH, "message": dash.ALL}, "n_clicks"
+        ),
         State({"type": "sdc-store", "chat": dash.MATCH}, "data"),
         prevent_initial_call=True,
     )
     def handle_like(n_clicks_list, store_data):
         if not any(n_clicks_list):
             raise dash.exceptions.PreventUpdate
-        _record_feedback(registry, ctx.triggered_id["chat"], ctx.triggered_id.get("message"), FeedbackType.LIKE, store_data)
+        _record_feedback(
+            registry,
+            ctx.triggered_id["chat"],
+            ctx.triggered_id.get("message"),
+            FeedbackType.LIKE,
+            store_data,
+        )
         raise dash.exceptions.PreventUpdate
 
     @app.callback(
         Output({"type": "sdc-store", "chat": dash.MATCH}, "data", allow_duplicate=True),
-        Input({"type": "sdc-dislike", "chat": dash.MATCH, "message": dash.ALL}, "n_clicks"),
+        Input(
+            {"type": "sdc-dislike", "chat": dash.MATCH, "message": dash.ALL}, "n_clicks"
+        ),
         State({"type": "sdc-store", "chat": dash.MATCH}, "data"),
         prevent_initial_call=True,
     )
     def handle_dislike(n_clicks_list, store_data):
         if not any(n_clicks_list):
             raise dash.exceptions.PreventUpdate
-        _record_feedback(registry, ctx.triggered_id["chat"], ctx.triggered_id.get("message"), FeedbackType.DISLIKE, store_data)
+        _record_feedback(
+            registry,
+            ctx.triggered_id["chat"],
+            ctx.triggered_id.get("message"),
+            FeedbackType.DISLIKE,
+            store_data,
+        )
         raise dash.exceptions.PreventUpdate
 
     @app.callback(
         Output({"type": "sdc-report-modal", "chat": dash.MATCH}, "is_open"),
         Output({"type": "sdc-report-target", "chat": dash.MATCH}, "data"),
-        Input({"type": "sdc-report", "chat": dash.MATCH, "message": dash.ALL}, "n_clicks"),
+        Input(
+            {"type": "sdc-report", "chat": dash.MATCH, "message": dash.ALL}, "n_clicks"
+        ),
         Input({"type": "sdc-report-cancel", "chat": dash.MATCH}, "n_clicks"),
         Input({"type": "sdc-report-submit", "chat": dash.MATCH}, "n_clicks"),
         State({"type": "sdc-report-reason", "chat": dash.MATCH}, "value"),
@@ -56,7 +74,15 @@ def register_feedback_callbacks(app: dash.Dash, registry: dict[str, "AIChat"]) -
         State({"type": "sdc-report-target", "chat": dash.MATCH}, "data"),
         prevent_initial_call=True,
     )
-    def handle_report(report_clicks, _cancel_clicks, _submit_clicks, reason, details, store_data, current_target):
+    def handle_report(
+        report_clicks,
+        _cancel_clicks,
+        _submit_clicks,
+        reason,
+        details,
+        store_data,
+        current_target,
+    ):
         chat_id = ctx.triggered_id["chat"]
         triggered_type = ctx.triggered_id["type"]
         chat = registry[chat_id]
@@ -80,7 +106,9 @@ def register_feedback_callbacks(app: dash.Dash, registry: dict[str, "AIChat"]) -
                 )
                 try:
                     chat.on_report(report)
-                except Exception:  # noqa: BLE001 - developer handler, never crash the app
+                except (
+                    Exception
+                ):  # noqa: BLE001 - developer handler, never crash the app
                     logger.exception("on_report handler raised for chat=%s", chat_id)
             return False, dash.no_update
 
@@ -88,7 +116,11 @@ def register_feedback_callbacks(app: dash.Dash, registry: dict[str, "AIChat"]) -
 
 
 def _record_feedback(
-    registry: dict[str, "AIChat"], chat_id: str, message_id: str | None, feedback_type: FeedbackType, store_data
+    registry: dict[str, "AIChat"],
+    chat_id: str,
+    message_id: str | None,
+    feedback_type: FeedbackType,
+    store_data,
 ) -> None:
     chat = registry[chat_id]
 
@@ -100,8 +132,19 @@ def _record_feedback(
         return  # duplicate submission of the same reaction -- ignore
     chat._feedback_state[key] = feedback_type
 
+    feedback = Feedback(
+        message_id=message_id,
+        conversation_id=conversation_id,
+        feedback_type=feedback_type,
+        session_id=session_id,
+    )
+    chat.sinks.emit("on_feedback", feedback)
     if chat.on_feedback is not None:
-        feedback = Feedback(message_id=message_id, conversation_id=conversation_id, feedback_type=feedback_type)
+        feedback = Feedback(
+            message_id=message_id,
+            conversation_id=conversation_id,
+            feedback_type=feedback_type,
+        )
         try:
             chat.on_feedback(feedback)
         except Exception:  # noqa: BLE001 - developer handler, never crash the app

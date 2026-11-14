@@ -47,3 +47,5 @@ class AIChatConfig(BaseModel):
     allow_report: bool = True
     show_timestamps: bool = False
     show_toggle_button: bool = True
+    expandable: bool = False
+    expanded_width: str = "720px"

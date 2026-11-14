@@ -1,11 +1,12 @@
 /* streaming_dash_chat -- base styles. CSS variables make theme/placement
    customization straightforward without overriding whole rulesets. */
 
-.sdc-root {
+:root, .sdc-root {
   --sdc-radius: 16px;
   --sdc-gap: 10px;
   --sdc-bg: #ffffff;
   --sdc-fg: #1a1a1a;
+  --sdc-grayer: #d8d8d8;
   --sdc-muted: #6b7280;
   --sdc-border: #e5e7eb;
   --sdc-accent: #2563eb;
@@ -16,7 +17,12 @@
   --sdc-assistant-bubble-fg: #1a1a1a;
   --sdc-error-bubble: #fee2e2;
   --sdc-error-bubble-fg: #991b1b;
-  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  --sdc-icon-minimize: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='4 14 10 14 10 20'/%3E%3Cpolyline points='20 10 14 10 14 4'/%3E%3Cline x1='14' x2='21' y1='10' y2='3'/%3E%3Cline x1='3' x2='10' y1='21' y2='14'/%3E%3C/svg%3E");
+}
+
+@media (max-width: 480px) {
+  .sdc-offcanvas { width: 100vw !important; margin: 0; max-width: 100vw; border-radius: 0; }
+  .sdc-expand-btn { display: none; }
 }
 
 .sdc-theme--dark {
@@ -57,13 +63,30 @@
 
 /* Offcanvas shell -- override Bootstrap's modal-like defaults */
 .sdc-offcanvas {
+  --sdc-inset: 12px;
   background: var(--sdc-bg);
   color: var(--sdc-fg);
   display: flex;
   flex-direction: column;
+  margin: var(--sdc-inset);
+  max-width: calc(100vw - 2 * var(--sdc-inset));
   border: none !important;
+  border-radius: var(--sdc-radius);
+  overflow: hidden; /* clips the header/input row to the rounded corners */
   box-shadow: 0 0 40px rgba(0, 0, 0, 0.15);
+  transition: transform 0.3s ease-in-out, width 0.25s ease;
 }
+.sdc-offcanvas.offcanvas-end   { transform: translateX(calc(100% + 2 * var(--sdc-inset))); }
+.sdc-offcanvas.offcanvas-start { transform: translateX(calc(-100% - 2 * var(--sdc-inset))); }
+.sdc-offcanvas.sdc-expanded { width: var(--sdc-expanded-width, 720px) !important; }
+
+.sdc-icon--expand {
+  --sdc-icon: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='15 3 21 3 21 9'/%3E%3Cpolyline points='9 21 3 21 3 15'/%3E%3Cline x1='21' x2='14' y1='3' y2='10'/%3E%3Cline x1='3' x2='10' y1='21' y2='14'/%3E%3C/svg%3E");
+}
+.sdc-icon--expand[data-expanded="true"]::before {
+  --sdc-icon: var(--sdc-icon-minimize);
+}
+
 .sdc-offcanvas .offcanvas-body {
   display: flex;
   flex-direction: column;
@@ -110,7 +133,6 @@
 .sdc-close-btn { font-size: 1.25rem; line-height: 1; padding: 4px 8px; }
 .sdc-header-btn:hover, .sdc-close-btn:hover { background: var(--sdc-border); color: var(--sdc-fg); }
 
-/* Message list */
 .sdc-scroll-area {
   flex: 1 1 auto;
   overflow-y: auto;
@@ -119,15 +141,23 @@
   flex-direction: column;
   gap: var(--sdc-gap);
   scroll-behavior: smooth;
+
+  /* Reserve the scrollbar gutter on BOTH sides so left and right margins match */
+  scrollbar-gutter: stable both-edges;
+  scrollbar-width: thin;
 }
 /* Grouping wrapper only -- its children lay out directly in .sdc-scroll-area's
    flex column so Patch-appended history and the active bubble share one
    scroll container and one auto-scroll behavior. */
-.sdc-messages { display: contents; }
+.sdc-message {
+  display: flex;
+  flex-direction: column;
+  max-width: 100%;
+}
 
-.sdc-message { display: flex; max-width: 85%; }
-.sdc-message--user { align-self: flex-end; }
-.sdc-message--assistant, .sdc-message--error { align-self: flex-start; }
+.sdc-message--user { align-self: flex-end; align-items: flex-end; margin-bottom: 8px; }
+.sdc-message--assistant, .sdc-message--error { align-self: flex-start; align-items: flex-start; }
+
 
 .sdc-message-bubble {
   border-radius: var(--sdc-radius);
@@ -157,24 +187,80 @@
   padding: 10px 12px;
   overflow-x: auto;
 }
-.sdc-message-timestamp { font-size: 0.7rem; color: var(--sdc-muted); margin-top: 4px; }
 
-.sdc-message-actions { display: flex; gap: 6px; margin-top: 6px; }
+.sdc-message--user .sdc-message-timestamp { font-size: 0.7rem; color: var(--sdc-grayer); margin-top: 4px; }
+.sdc-message--assistant .sdc-message-timestamp { font-size: 0.7rem; color: var(--sdc-muted); margin-top: 4px; }
+.sdc-message-actions {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  margin: 4px 0 0 4px;
+}
 .sdc-action-btn {
-  border: 1px solid var(--sdc-border);
+  position: relative;
+  width: 28px;
+  height: 28px;
+  padding: 0;
+  border: none;
+  border-radius: 8px;
   background: transparent;
   color: var(--sdc-muted);
-  font-size: 0.72rem;
-  padding: 3px 8px;
-  border-radius: 999px;
   cursor: pointer;
+  transition: background-color 0.12s ease, color 0.12s ease;
 }
+
+.sdc-action-btn::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  margin: auto;
+  width: 16px;
+  height: 16px;
+  background-color: currentColor;
+  -webkit-mask: var(--sdc-icon) center / contain no-repeat;
+          mask: var(--sdc-icon) center / contain no-repeat;
+}
+
 .sdc-action-btn:hover { background: var(--sdc-border); color: var(--sdc-fg); }
+.sdc-action-btn:focus-visible { outline: 2px solid var(--sdc-accent); outline-offset: 1px; }
+.sdc-action-btn[aria-pressed="true"] { color: var(--sdc-fg); background: var(--sdc-border); }
+.sdc-action-btn.is-copied { color: var(--sdc-accent); }
+.sdc-action-btn.is-copied::before { --sdc-icon: var(--sdc-icon-check); }
 .sdc-action-btn.sdc-action-btn--active { color: var(--sdc-accent); border-color: var(--sdc-accent); }
 
+/* Lucide-style stroke icons as data URIs */
+.sdc-icon--copy {
+  --sdc-icon: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Crect width='14' height='14' x='8' y='8' rx='2'/%3E%3Cpath d='M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2'/%3E%3C/svg%3E");
+}
+.sdc-icon--like {
+  --sdc-icon: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M7 10v12'/%3E%3Cpath d='M15 5.88 14 10h5.83a2 2 0 0 1 1.92 2.56l-2.33 8A2 2 0 0 1 17.5 22H4a2 2 0 0 1-2-2v-8a2 2 0 0 1 2-2h2.76a2 2 0 0 0 1.79-1.11L12 2a3.13 3.13 0 0 1 3 3.88Z'/%3E%3C/svg%3E");
+}
+.sdc-icon--dislike {
+  --sdc-icon: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M17 14V2'/%3E%3Cpath d='M9 18.12 10 14H4.17a2 2 0 0 1-1.92-2.56l2.33-8A2 2 0 0 1 6.5 2H20a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2h-2.76a2 2 0 0 0-1.79 1.11L12 22a3.13 3.13 0 0 1-3-3.88Z'/%3E%3C/svg%3E");
+}
+.sdc-icon--regenerate {
+  --sdc-icon: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M21 12a9 9 0 1 1-9-9c2.52 0 4.93 1 6.74 2.74L21 8'/%3E%3Cpath d='M21 3v5h-5'/%3E%3C/svg%3E");
+}
+.sdc-icon--report {
+  --sdc-icon: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M4 15s1-1 4-1 5 2 8 2 4-1 4-1V3s-1 1-4 1-5-2-8-2-4 1-4 1z'/%3E%3Cpath d='M4 22v-7'/%3E%3C/svg%3E");
+}
+.sdc-root, :root {
+  --sdc-icon-check: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M20 6 9 17l-5-5'/%3E%3C/svg%3E");
+}
 /* Active (in-progress) streaming bubble sits visually like an assistant message */
-.sdc-active-bubble .sdc-message-bubble { background: var(--sdc-assistant-bubble); color: var(--sdc-assistant-bubble-fg); border-bottom-left-radius: 4px; }
+.sdc-active-bubble > div {
+  background: var(--sdc-assistant-bubble);
+  color: var(--sdc-assistant-bubble-fg);
+  border-radius: var(--sdc-radius);
+  border-bottom-left-radius: 4px;
+  padding: 10px 14px;
+  overflow-wrap: anywhere;
+}
 
+/* At stream start the content is "", so don't show an empty bubble */
+.sdc-active-bubble > div:empty {
+  display: none;
+}
 /* Input row */
 .sdc-input-row {
   display: flex;

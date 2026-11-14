@@ -29,7 +29,9 @@ def render_chat(config: AIChatConfig) -> html.Div:
         welcome_children.append(
             render_message(
                 chat_id,
-                Message(id="welcome", role=Role.ASSISTANT, content=config.welcome_message),
+                Message(
+                    id="welcome", role=Role.ASSISTANT, content=config.welcome_message
+                ),
                 config,
             )
         )
@@ -72,7 +74,7 @@ def render_chat(config: AIChatConfig) -> html.Div:
         placement=config.placement,
         close_button=False,
         style=_offcanvas_style(config),
-        className=f"sdc-offcanvas sdc-theme--{config.theme}"
+        className=f"sdc-root sdc-offcanvas sdc-theme--{config.theme}"
         + (f" {config.class_name}" if config.class_name else ""),
     )
 
@@ -87,4 +89,6 @@ def render_chat(config: AIChatConfig) -> html.Div:
         else None
     )
 
-    return html.Div([toggle_button, offcanvas], className="sdc-root", id=f"{chat_id}-root")
+    return html.Div(
+        [toggle_button, offcanvas], className="sdc-root", id=f"{chat_id}-root"
+    )

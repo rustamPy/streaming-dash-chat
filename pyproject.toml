@@ -29,9 +29,11 @@ dependencies = [
 [project.optional-dependencies]
 openai = ["openai>=3.40"]
 pydantic-ai = ["pydantic-ai>=2.60.0"]
+ollama = ["ollama>=0.6"]
 all = [
     "openai>=3.40",
     "pydantic-ai>=2.60.0",
+    "ollama>=0.6",
 ]
 dev = [
     "pytest>=8.0",
@@ -46,8 +48,6 @@ Changelog = "https://github.com/example/streaming-dash-chat/blob/main/CHANGELOG.
 [tool.hatch.build.targets.wheel]
 packages = ["src/streaming_dash_chat"]
 
-[tool.hatch.build.targets.wheel.force-include]
-"src/streaming_dash_chat/assets" = "streaming_dash_chat/assets"
 
 [tool.hatch.build.targets.sdist]
 include = [

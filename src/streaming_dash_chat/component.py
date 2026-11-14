@@ -16,6 +16,7 @@ from streaming_dash_chat.providers.base import BaseChatProvider
 from streaming_dash_chat.services.chat_engine import ChatEngine
 from streaming_dash_chat.services.conversation_manager import ConversationManager
 from streaming_dash_chat.services.stream_manager import StreamManager
+from streaming_dash_chat.services.sinks import BaseChatSink, SinkDispatcher
 
 FeedbackHandler = Callable[[Feedback], None]
 ReportHandler = Callable[[Report], None]
@@ -62,6 +63,9 @@ class AIChat:
         on_feedback: FeedbackHandler | None = None,
         on_report: ReportHandler | None = None,
         conversation_manager: ConversationManager | None = None,
+        expandable: bool = False,
+        expanded_width: str = "720px",
+        sinks: list[BaseChatSink] | None = None,
     ) -> None:
         self.config = AIChatConfig(
             id=id,
@@ -81,14 +85,26 @@ class AIChat:
             allow_report=allow_report,
             show_timestamps=show_timestamps,
             show_toggle_button=show_toggle_button,
+            expandable=expandable,
+            expanded_width=expanded_width,
         )
         self.provider = provider
         self.on_feedback = on_feedback
         self.on_report = on_report
         self.conversations = conversation_manager or ConversationManager()
         self.streams = StreamManager()
-        self.engine = ChatEngine(self.provider, self.conversations, self.streams)
+        self.sinks = SinkDispatcher(sinks or [])
+        self.engine = ChatEngine(
+            self.provider,
+            self.conversations,
+            self.streams,
+            sinks=self.sinks,
+            chat_id=id,
+        )
         self._feedback_state: dict[tuple[str, str | None], FeedbackType] = {}
+
+    def flush_sinks(self, timeout: float = 15.0) -> None:
+        self.sinks.flush(timeout)
 
     def render(self) -> dash.development.base_component.Component:
         return render_chat(self.config)
